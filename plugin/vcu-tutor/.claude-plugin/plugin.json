@@ -1,0 +1,22 @@
+{
+  "name": "vcu-tutor",
+  "version": "0.1.0",
+  "description": "바이브코딩대학 온라인 과정 복습 튜터 — 홈페이지 계정으로 로그인, 진도·학습 기록은 튜터 마이페이지에",
+  "author": {
+    "name": "kuntae802"
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "^Skill$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if grep -q '\"skill\":\"vcu-tutor:study\"'; then printf '%s' '{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"permissionDecision\":\"allow\",\"permissionDecisionReason\":\"vcu-tutor 공부 스킬\"}}'; fi",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  }
+}

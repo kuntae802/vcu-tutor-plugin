@@ -1,0 +1,13 @@
+{
+  "name": "vcu-tutor-plugins",
+  "owner": { "name": "kuntae802" },
+  "description": "바이브코딩대학 온라인 과정 수강생용 튜터 배포 채널.",
+  "plugins": [
+    {
+      "name": "vcu-tutor",
+      "source": "./plugin/vcu-tutor",
+      "description": "홈 강의실에서 본 회차를 과외식으로 복습 — 진도·학습 기록",
+      "category": "productivity"
+    }
+  ]
+}
