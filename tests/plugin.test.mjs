@@ -352,3 +352,16 @@ test("인트로 차시는 확인 문답 없이 구간을 끊지 않고 한 번�
     assert.ok(modes.includes(s), `modes.md 에 없는 인트로 예외: ${s}`);
   }
 });
+
+test("확인 문항을 낼 차례면 '질문 있으세요?' 없이 확인 문항을 바로 내고, '질문 있으세요?'는 해설 뒤에 묻는다", () => {
+  // 사용자 실측(2026-11-11 · 0.1.3): 심화 1-1 첫 구간을 전하고 "질문 있으세요?"부터 물었다 → "모든 모드에서 그 구간 마지막엔 확인 질문이 바로 붙으면 좋겠다"
+  const skill = read(path.join(S, "SKILL.md"));
+  const modes = read(path.join(S, "modes.md"));
+  const line = skill.split("\n").find((l) => l.includes("**확인 문항을 낼 차례면 확인이 먼저다:**"));
+  assert.ok(line, "SKILL.md 짧은 쉼에 확인 먼저 규칙이 없습니다");
+  for (const s of ["\"질문 있으세요?\" 없이 확인 문항으로 바로 끝낸다", "심화는 구간을 전한 응답", "일반은 차시의 마지막 구간을 전한 응답", "빠른은 요지·핵심을 전한 응답", "마지막 해설 끝에 묻는다"]) {
+    assert.ok(line.includes(s), `확인 먼저 규칙에 없는 말: ${s}`);
+  }
+  assert.ok(modes.includes("짧은 쉼(확인 문항을 낼 차례면 확인 문항을 바로 내고, 짧은 쉼은 마지막 확인 해설 끝)"), "modes.md 쉼에 확인 먼저가 없습니다");
+  assert.ok(modes.includes("구간마다 확인 질문을 하나 내고") && modes.includes("더 물을 것은 답과 해설 뒤에 낸다"), "심화 확인이 한 응답에 물음 둘을 허락합니다");
+});
