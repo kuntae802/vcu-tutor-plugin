@@ -321,3 +321,34 @@ test("지난 위치는 차시 이름표로 말한다 — 제목만 떼면 '1.'�
   assert.match(line, /`label`/);
   assert.doesNotMatch(line, /<차시 제목>/);
 });
+
+test("인트로 차시는 확인 문답 없이 구간을 끊지 않고 한 번에 전하고, 나머지는 다른 차시와 같다", () => {
+  // 사용자 결정(2026-11-11): 인트로는 질답만 뺀다 · 실습은 넣는다 · 내용은 구간 없이 한 번에 — 그 밖은 정하지 않는다(유연성)
+  const skill = read(path.join(S, "SKILL.md"));
+  const modes = read(path.join(S, "modes.md"));
+  const at = skill.indexOf("### 인트로 차시");
+  assert.ok(at > skill.indexOf("### 5. 닫기") && at < skill.indexOf("## 학습 기록"), "인트로 차시 절이 닫기 뒤 · 학습 기록 앞에 있어야 합니다");
+  const sec = skill.slice(at, skill.indexOf("## 학습 기록"));
+  for (const s of ["이름표가 「인트로」로 끝나는 차시는 인트로 강의다", "두 가지만 다르게 한다. 나머지(열기·실습·닫기·쉼)는 다른 차시와 같다.",
+    "**구간을 나누지 않는다:**", "구간 사이에 쉬거나 구간마다 진도를 남기지 않는다", "깊이는 모드대로다", "**확인 문답을 하지 않는다.**"]) {
+    assert.ok(sec.includes(s), `인트로 차시 절에 없는 문장: ${s}`);
+  }
+  for (const k of ["회차 인트로", "개념 인트로", "심화 인트로", "실습 인트로", "챕터 인트로"]) assert.ok(sec.includes(k), `인트로 갈래가 빠졌습니다: ${k}`);
+  // 진도 units·resume 의 label 은 멈춘 구간 시각("· 6분쯤")이 붙어 「인트로」로 끝나지 않는다 — 떼지 않으면 이어 갈 때 확인 문답이 되살아난다
+  assert.ok(sec.includes("「· 6분쯤」·「· 처음 부분」") && sec.includes("떼고 본다"), "진도 이름표의 시각 꼬리를 떼는 규칙이 없습니다");
+  for (const old of ["두세 줄 정리는 하지 않는다", "분량에 세지", "<마지막 구간>"]) assert.ok(!sec.includes(old), `인트로 전용으로 더 정하지 않는다: ${old}`);
+  // 단계·이어 가기·쉼·모드 문서가 인트로 절을 가리킨다(단계만 읽고 확인 문항을 내지 않게)
+  const deliver = skill.slice(skill.indexOf("### 2. 전달"), skill.indexOf("### 3. 확인"));
+  const check = skill.slice(skill.indexOf("### 3. 확인"), skill.indexOf("### 4. 실습"));
+  assert.ok(deliver.includes("인트로 차시는 구간을 끊지 않고 한 번에 전한다"), "전달 단계가 인트로 절을 가리키지 않습니다");
+  assert.ok(check.includes("인트로 차시는 확인을 하지 않는다"), "확인 단계가 인트로 절을 가리키지 않습니다");
+  const resume = skill.split("\n").find((l) => l.includes("`resume.stopped`이면 그 차시를 하다 멈춘 것이다"));
+  assert.ok(resume && resume.includes("인트로 차시면 확인은 하지 않는다"), "시작 2번 이어 가기가 인트로 예외를 가리키지 않습니다");
+  assert.ok(skill.includes("인트로 차시는 전달 전체"), "짧은 쉼이 인트로를 구간마다 끊습니다");
+  // 구간 진도를 남기라는 옛 문장(열기 첫 구간 · 차시 중간 기록 · 일반·심화 진도)에 인트로 예외가 붙어 있다
+  assert.equal(skill.split("(인트로 차시는 빼고 — 아래 \"인트로 차시\")").length - 1, 2, "열기·차시 중간 기록에 인트로 예외가 빠졌습니다");
+  assert.equal(modes.split("(인트로 차시는 빼고").length - 1, 2, "modes.md 일반·심화 진도에 인트로 예외가 빠졌습니다");
+  for (const s of ["**인트로:**", "구간마다 진도를 남기지 않는다", "인트로 차시는 전달 전체)마다 짧은 쉼", "(인트로 차시는 확인이 없다)", "꼭 남긴다(인트로 차시는 빼고"]) {
+    assert.ok(modes.includes(s), `modes.md 에 없는 인트로 예외: ${s}`);
+  }
+});
