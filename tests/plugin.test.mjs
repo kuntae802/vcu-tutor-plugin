@@ -82,7 +82,7 @@ test("manifest·연결 = 튜터 OAuth 한 줄, 토큰·사용자 설정·Codex �
 
 const SAVED_NOTE = "진도·확인 문답·질문·메모가 튜터에 남고 담당 조교님과 운영진이 볼 수 있어요";   // 첫 연결 안내(★ 판단 기록) — README·스킬 같은 글자
 // 튜터 웹이 내미는 두 문장(웹 lib/plugin.ts FIRST_SENTENCE · lib/study.ts tutorSentence) — 스킬 트리거·README 가 같은 글자를 받는다
-const FIRST_SENTENCE = "vcu-tutor로 2회차 이어서 공부하자";
+const FIRST_SENTENCE = "vcu-tutor로 1회차 이어서 공부하자";
 const MYPAGE_SENTENCE = "vcu-tutor로 <과정 이름표> 이어서 공부하자";
 const MYPAGE_EXAMPLE = "vcu-tutor로 2회차 · 크롤러 구축과 WEB의 이해 이어서 공부하자";   // 마이페이지가 실제로 복사해 주는 글자(2회차 과정 이름표)
 
@@ -140,7 +140,7 @@ test("README 설치 4단계와 원격 한 줄", () => {
     "`/mcp`를 열고 목록에서 `plugin:vcu-tutor:tutor`(needs authentication)를 골라 **Authenticate**를 누릅니다."])
     assert.ok(r.includes(s), `README 에 없는 문장: ${s}`);
   for (const s of ["/plugin marketplace add kuntae802/vcu-tutor-plugin", "/plugin install vcu-tutor@vcu-tutor-plugins", "`/mcp`",
-    "vcu-tutor로 2회차 이어서 공부하자", SAVED_NOTE, "localhost",                // 첫 문장 = 웹 Task 9 FIRST_SENTENCE 와 같은 글자
+    "vcu-tutor로 1회차 이어서 공부하자", SAVED_NOTE, "localhost",                // 첫 문장 = 웹 Task 9 FIRST_SENTENCE 와 같은 글자
     "튜터로 이어서 공부하기", MYPAGE_SENTENCE, MYPAGE_EXAMPLE,                    // 마이페이지 단추와 그 단추가 복사해 주는 꼴(웹 tutorSentence)
     "공부 중에 Claude Code가 허용 창을 띄우면 다시 묻지 않는 쪽(`Yes, and don't ask again for vcu-tutor:study in …` 또는 `Yes, allow reading from … during this session`)을 고릅니다."])   // 실제 허용 창의 선택지 글자
     assert.ok(r.includes(s), `README 에 없는 문장: ${s}`);
