@@ -13,7 +13,7 @@ const read = (p) => fs.readFileSync(p, "utf8");
 const json = (p) => JSON.parse(read(p));
 
 const READ_TOOLS = ["list_folders", "list_items", "get_item", "get_index", "get_text", "search", "concepts", "get_outline"];
-const STUDY_TOOLS = ["study_progress", "study_start", "study_set_unit", "study_set_practice", "study_set_mode", "study_record", "study_review_clear"];
+const STUDY_TOOLS = ["study_progress", "study_start", "study_set_unit", "study_set_practice", "study_set_mode", "study_record", "study_review_mark", "study_review_clear"];
 const ALL = [...READ_TOOLS, ...STUDY_TOOLS];
 const SKILL_FILES = ["SKILL.md", "modes.md", "practice.md"];
 // 스킬 폴더 파일 읽기만 좁혀 허용한다(스킬이 켜진 응답 한정 — Claude Code 의 allowed-tools 는 그 턴에만 먹는다). 범위 없는 Read 는 넣지 않는다
@@ -146,7 +146,7 @@ test("README 설치 4단계와 원격 한 줄", () => {
     assert.ok(r.includes(s), `README 에 없는 문장: ${s}`);
 });
 
-test("허용 도구 칸 = 읽기 8 + study_* 7(플러그인 연결 이름 꼴) + 스킬 폴더로 좁힌 Read 둘", () => {
+test("허용 도구 칸 = 읽기 8 + study_* 8(플러그인 연결 이름 꼴) + 스킬 폴더로 좁힌 Read 둘", () => {
   const got = allowedTools(frontmatter(read(path.join(S, "SKILL.md"))));
   assert.equal(new Set(got).size, got.length, "같은 도구가 두 번 있습니다");
   assert.deepEqual(got.filter((t) => t.startsWith("mcp__")).sort(), ALL.map((t) => prefix() + t).sort());
@@ -169,7 +169,7 @@ test("플러그인 Skill 훅은 vcu-tutor:study 일 때만 allow 를 내고 늘 
   assert.equal(run("other", '"skill":"vcu-tutor:study"'), "", "args 안의 글자로 허용합니다");   // JSON 이스케이프로 \" 가 붙어 맞지 않아야
 });
 
-test("허용 hook 은 같은 15개 도구에만 걸리고 allow 를 낸다", () => {
+test("허용 hook 은 같은 16개 도구에만 걸리고 allow 를 낸다", () => {
   const fm = frontmatter(read(path.join(S, "SKILL.md")));
   const re = matcherRegex(fm);
   for (const t of ALL) assert.ok(re.test(prefix() + t), `${t} 가 맞지 않습니다`);
@@ -185,7 +185,7 @@ test("허용 hook 은 같은 15개 도구에만 걸리고 allow 를 낸다", () 
   assert.equal(out.permissionDecision, "allow");
 });
 
-test("스킬 문서가 부르는 study_* 는 허용 칸의 7개뿐이고 7개 모두 문서에 나온다", () => {
+test("스킬 문서가 부르는 study_* 는 허용 칸의 8개뿐이고 8개 모두 문서에 나온다", () => {
   const body = SKILL_FILES.map((f) => read(path.join(S, f))).join("\n");
   // 앞에 글자·밑줄·붙임표가 붙은 것(`vcu-tutor_tutor` 접두사 등)은 도구 이름이 아니다
   const used = new Set(body.match(/(?<![\w-])study_[a-z_]+/g) ?? []);
@@ -364,4 +364,17 @@ test("확인 문항을 낼 차례면 '질문 있으세요?' 없이 확인 문항
   }
   assert.ok(modes.includes("짧은 쉼(확인 문항을 낼 차례면 확인 문항을 바로 내고, 짧은 쉼은 마지막 확인 해설 끝)"), "modes.md 쉼에 확인 먼저가 없습니다");
   assert.ok(modes.includes("구간마다 확인 질문을 하나 내고") && modes.includes("더 물을 것은 답과 해설 뒤에 낸다"), "심화 확인이 한 응답에 물음 둘을 허락합니다");
+});
+
+test("공부 중에 '다시 볼 것'을 켤 수 있다 — 기록이 아니면 메모로 남긴 뒤 켠다", () => {
+  // 사용자 요청(2026-11-11): 웹에서만 켜던 '다시 볼 것'을 튜터에게 말해서도 — 서버 study_review_mark(vcu_tutor)
+  const skill = read(path.join(S, "SKILL.md"));
+  const sec = skill.slice(skill.indexOf("## 다시 볼 것"), skill.indexOf("## 차시 다섯 단계"));
+  for (const s of ["**공부 중에 표시하기:**", "`study_review_mark(<기록 id>)`로 표시를 켠다", "다시 볼 것으로 표시했습니다 — <이름표>:", "진도는 바꾸지 않는다",
+    "메모 규칙대로 그 글을 메모로 먼저 남기고, 돌아온 `id`로 표시를 켠다", "웹 마이페이지의 학습 기록에서 표시할 수 있다고 알린다",
+    "표시만 부탁한 응답이면 이 줄로 끝낸다", "알림은 표시 한 줄만 쓴다"]) {
+    assert.ok(sec.includes(s), `다시 볼 것 절에 없는 문장: ${s}`);
+  }
+  assert.ok(skill.includes("`study_review_mark`만 그 기록이 돌아온 뒤에 부른다"), "한 응답 안의 순서에 표시 켜기 예외가 없습니다");
+  assert.ok(read(path.join(P, "README.md")).includes("16개(읽기 8개, 진도·기록 8개)"));
 });

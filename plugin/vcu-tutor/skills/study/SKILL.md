@@ -16,12 +16,13 @@ allowed-tools:
   - mcp__plugin_vcu-tutor_tutor__study_set_practice
   - mcp__plugin_vcu-tutor_tutor__study_set_mode
   - mcp__plugin_vcu-tutor_tutor__study_record
+  - mcp__plugin_vcu-tutor_tutor__study_review_mark
   - mcp__plugin_vcu-tutor_tutor__study_review_clear
   - Read(/${CLAUDE_SKILL_DIR}/**)
   - Read(~/.claude/plugins/cache/vcu-tutor-plugins/**)
 hooks:
   PreToolUse:
-    - matcher: "^mcp__plugin_vcu-tutor_tutor__(list_folders|list_items|get_item|get_index|get_text|search|concepts|get_outline|study_progress|study_start|study_set_unit|study_set_practice|study_set_mode|study_record|study_review_clear)$"
+    - matcher: "^mcp__plugin_vcu-tutor_tutor__(list_folders|list_items|get_item|get_index|get_text|search|concepts|get_outline|study_progress|study_start|study_set_unit|study_set_practice|study_set_mode|study_record|study_review_mark|study_review_clear)$"
       hooks:
         - type: command
           command: printf
@@ -52,13 +53,14 @@ hooks:
   - `folder`(폴더 id)를 주면 그 과정 하나다: `folder`·`folder_title`(과정 이름 = 회차 이름표)·`mode`·`last_unit`(마지막으로 공부한 차시 id)·`counts`(끝낸·하는 중·안 한·전체 차시 수)·`resume`·`units_total`·`units_offset`·`units`·`review_total`·`review_records`·`memo_total`·`memos`가 온다. 서버에 진도가 없는 과정이면 `started`가 `false`인 짧은 답이 온다.
   - `resume`은 이어 갈 차시다(웹 마이페이지 "이어서 공부하기"와 같은 차시): `unit`·`ord`·`title`·`status`·`last_section`·`section_title`·`label`·`stopped`(하는 중이고 멈춘 구간이 있다). 다 끝났으면 null이다(아래 "시작" 2번 "다음 할 곳").
   - `units`는 차시 순서대로 `unit`(차시 id)·`ord`(과정 안 차례, 0부터)·`title`·`status`(`todo`·`doing`·`done`)·`last_section`(그 차시에서 마지막으로 마친 구간)·`section_title`(그 구간 제목)·`label`(그 차시의 강의실 이름표)·`practices`(`[{"no", "status"}]` 목록)다. **`resume` 둘레 30개만 온다**(`units_offset` = 창 시작 차례, 0부터 · `units_total` = 전체 차시 수). 찾는 차시가 창에 없으면 `unit_offset`을 0·30·60…으로 넘겨 가며 찾는다(차례를 알면 `unit_offset=<ord>`).
-  - `review_records`는 사용자가 웹에서 "다시 볼 것"으로 표시한 그 과정의 기록 최근 10개다(`review_total` = 전체 수, 아래 "다시 볼 것"). `memos`는 그 과정의 메모 최근 5개(+ 전체 수 `memo_total`)다 — 웹 마이페이지에서 쓴 메모도 여기 온다. 두 목록의 기록에서 강의실 이름표는 `label`, 자료 제목은 `item_title`이다. 긴 글은 앞 200자만 오고 그 기록에 `truncated: true`가 붙는다.
+  - `review_records`는 사용자가 "다시 볼 것"으로 표시한 그 과정의 기록 최근 10개다(`review_total` = 전체 수, 아래 "다시 볼 것"). `memos`는 그 과정의 메모 최근 5개(+ 전체 수 `memo_total`)다 — 웹 마이페이지에서 쓴 메모도 여기 온다. 두 목록의 기록에서 강의실 이름표는 `label`, 자료 제목은 `item_title`이다. 긴 글은 앞 200자만 오고 그 기록에 `truncated: true`가 붙는다.
   - `folder`를 빼면 내 과정 전부의 요약만 온다: `total`(과정 수)과 `courses`(과정마다 `folder`·`folder_title`·`mode`·`last_unit`·`counts`·`last_at`·`review`(다시 볼 것 **수**)). 차시와 기록은 없다. 과정을 정한 뒤 `study_progress(<폴더 id>)`로 다시 부른다.
 - `study_start(folder, mode, items)`: 과정을 시작하거나 범위를 넓힌다. `items` = `[{"item": "<폴더>/<자료>", "title": "…"}]`이고, `part`는 쓰지 않는다. 이미 있는 과정이면 더할 차시만 주고 `mode`는 그 과정의 모드를 그대로 준다. 이미 있는 과정에서는 모드가 바뀌지 않고 범위에 없는 차시만 뒤에 붙는다(결과 `created: false`, `added` = 붙은 수).
 - `study_set_unit(unit, status, section)`: 차시 상태를 남긴다. 구간을 마쳤으면 `section`(`s3`·`p2s3`)을 같이 준다.
 - `study_set_practice(unit, no, status, note)`: 실습 상태(`done`·`changed`·`skipped`)와 한 줄 메모를 남긴다.
 - `study_set_mode(folder, mode)`: 모드를 바꾼다.
 - `study_record(kind, folder, item, section, question, answer, explanation, body)`: 학습 기록 한 건을 남긴다(아래 "학습 기록").
+- `study_review_mark(record_id)`: 기록에 "다시 볼 것" 표시를 켠다(아래 "다시 볼 것").
 - `study_review_clear(record_id)`: 기록의 "다시 볼 것" 표시를 푼다.
 
 - **차시 id:** `<폴더>/<자료>`다(예: `my-course/1-3-3`).
@@ -69,8 +71,8 @@ hooks:
 - **쓰기가 실패하면**(연결 오류, 글이 너무 길다는 거절, 고쳐 불러도 거절): "서버에 <남기려던 것>을 남기지 못했습니다 — <오류 한 줄>. 공부는 이어 갑니다."라고 한 줄로 알리고 공부를 이어 간다. 실패 알림은 무엇이 실패했든 그 응답 맨 끝 글의 첫머리에 쓰고, 해설·답은 그대로 다 쓴다(아래 "한 응답 안의 순서"). 글을 줄여서 다시 남기지 않는다. 같은 쓰기를 되풀이해 부르지 않고, 사용자가 "다시 남겨 줘"라고 하면 그때 남기려던 글 그대로 한 번 더 부르고, 결과 한 줄로 그 응답을 끝낸다. 해설·다음 질문은 다시 쓰지 않는다.
 - **진도 읽기가 실패하면:** "서버에서 진도를 읽지 못했습니다 — <오류 한 줄>."이라고 알리고, 어느 과정·차시부터 할지 사용자에게 묻는다. 그 뒤의 쓰기는 그대로 부른다.
 - **한 응답 안의 순서 — 답은 한 번만 쓴다.** 도구는 먼저 다 부르고, 답은 응답 맨 끝에 한 번 다 쓴다. 답을 쓴 뒤 도구를 부르면, 도구가 돌아온 뒤 같은 답을 다시(줄여서라도) 쓰게 되거나 답이 화면에 아예 안 나간다. 이 순서는 같은 글이 두 번 나가지 않게 하려는 것이지 해설을 줄이려는 것이 아니다. 해설의 깊이와 양은 모드대로다([modes.md](modes.md)). 도구에 넣은 글은 사용자에게 답으로 보이지 않는다 — 학습 기록에 해설을 넣었다고 해설을 말한 것이 아니다.
-  1. 이번 응답에서 부를 도구는 학습 기록(`study_record`)까지 모두 답보다 먼저 부른다 — 진도 쓰기(`study_start`·`study_set_unit`·`study_set_practice`·`study_set_mode`)·`study_review_clear`, 진도 읽기(`study_progress`), 튜터 자료 읽기, 파일 읽기·명령 실행, 학습 기록. 이번 응답에서 마칠 구간, 닫을 차시, 남길 실습 상태를 먼저 남긴다(되돌아보기 중에는 진도 쓰기를 부르지 않는다 — 아래 "되돌아보기 중에는 진도를 바꾸지 않는다").
-  2. 학습 기록은 도구 가운데 맨 나중에, 다른 도구가 다 돌아온 뒤 부른다. 읽은 결과(검색·원문·명령 결과)를 보고 이번 응답에서 새로 짓는 글(확인 문답의 해설, 내 질문의 답)을 먼저 다 지어서 넣는다(아래 "학습 기록"의 "기록 = 화면에 낼 글"). 기록을 다른 도구와 한꺼번에 부르지 않고, 기록을 부른 뒤 읽은 것으로 글을 바꾸거나 보태지 않는다. 기록이 여러 건이면 이어서 부르고, 거절돼 고쳐 다시 부르는 기록(위 "서버가 인자를 거절하면")도 이때 부른다.
+  1. 이번 응답에서 부를 도구는 학습 기록(`study_record`)까지 모두 답보다 먼저 부른다 — 진도 쓰기(`study_start`·`study_set_unit`·`study_set_practice`·`study_set_mode`)·`study_review_mark`·`study_review_clear`, 진도 읽기(`study_progress`), 튜터 자료 읽기, 파일 읽기·명령 실행, 학습 기록. 이번 응답에서 마칠 구간, 닫을 차시, 남길 실습 상태를 먼저 남긴다(되돌아보기 중에는 진도 쓰기를 부르지 않는다 — 아래 "되돌아보기 중에는 진도를 바꾸지 않는다").
+  2. 학습 기록은 도구 가운데 맨 나중에, 다른 도구가 다 돌아온 뒤 부른다. 읽은 결과(검색·원문·명령 결과)를 보고 이번 응답에서 새로 짓는 글(확인 문답의 해설, 내 질문의 답)을 먼저 다 지어서 넣는다(아래 "학습 기록"의 "기록 = 화면에 낼 글"). 기록을 다른 도구와 한꺼번에 부르지 않고, 기록을 부른 뒤 읽은 것으로 글을 바꾸거나 보태지 않는다. 기록이 여러 건이면 이어서 부르고, 거절돼 고쳐 다시 부르는 기록(위 "서버가 인자를 거절하면")도 이때 부른다. 방금 남긴 기록에 다시 볼 것 표시를 켜는 `study_review_mark`만 그 기록이 돌아온 뒤에 부른다(돌아온 `id`가 필요하다).
   3. 도구가 다 돌아오면 답을 한 번 쓴다. 이번 응답의 해설·답은 기록에 넣은 글 그대로 줄이지 않고 다 쓴다 — 사용자는 이 글을 처음 읽으니 되풀이가 아니다. "기록해 두었습니다" 같은 말로 해설을 대신하지 않는다. 화면에 글이 없다는 알림이 오면 기록을 다시 부르지 말고, 기록에 넣은 글을 줄이지 않고 다 쓴다. 이어 쓸 것(다음 질문, "질문 있으세요?")이 있으면 그것까지 쓴다. 따로 묻거나 메모를 부탁한 응답은 그 답에서 끝낸다(아래 "말투"). 답을 쓴 뒤에는 도구를 부르지 않는다.
   4. 앞 응답에서 이미 화면에 낸 글을 남기는 기록(메모 "이거 메모해 줘", "다시 남겨 줘")은 그 글 그대로 넣고 화면에 다시 쓰지 않는다. 그 응답은 결과 한 줄로 끝낸다.
   5. 도구를 부르기 전에 무엇을 하는지 한 줄로 알리는 것은 괜찮다. 그 줄에는 답·해설·맞고 틀림을 쓰지 않는다(예: "차시를 닫고 다음 차시를 찾겠습니다."). 쓰기 결과를 알리는 한 줄(메모를 남긴 알림, 쓰기가 실패한 알림 — 위 "쓰기가 실패하면")은 맨 끝 글의 첫머리에 쓴다.
@@ -80,12 +82,12 @@ hooks:
 튜터 MCP 도구 이름의 앞부분은 `mcp__plugin_vcu-tutor_tutor__`다. **끝 이름으로 찾는다.** 이 문서도 끝 이름으로만 부른다.
 
 - 읽기: `list_folders`·`list_items`·`get_item`·`get_index`·`get_text`·`search`·`concepts`·`get_outline`
-- 진도·기록: 위 "진도와 기록 — 서버 도구"의 7개
-- 이 스킬은 이 15개 말고 튜터 도구를 부르지 않는다.
+- 진도·기록: 위 "진도와 기록 — 서버 도구"의 8개
+- 이 스킬은 이 16개 말고 튜터 도구를 부르지 않는다.
 - 읽기 도구가 보이지 않으면 "튜터 연결이 보이지 않습니다. Claude Code에서 `/mcp`를 열어 `tutor` 서버에 로그인해 주세요(바이브코딩대학 홈페이지 계정)."라고 알리고 멈춘다. 도구가 로그인이 필요하다는 오류를 낼 때도 같은 안내를 하고 멈춘다.
 - 읽기 도구는 보이는데 진도·기록 도구가 보이지 않으면 "진도·기록 도구가 보이지 않습니다 — 튜터 서버가 아직 이 판을 받지 않았습니다. 이번에는 진도와 기록 없이 공부만 합니다."라고 한 번만 알리고, 진도·기록 없이 공부한다.
 - 목록·검색·개념 결과에 `next_offset`이 있으면 `offset`으로 넘겨 이어 받는다. `get_text` 결과가 `truncated: true`면 `next`를 `range`로 넘겨 이어 읽는다.
-- 플러그인으로 붙인 연결(`mcp__plugin_vcu-tutor_tutor__…`)의 이 15개는 이 스킬이 미리 허용해 두어 허용 창이 뜨지 않는다. 다른 이름으로 직접 붙인 연결이면 허용 창이 뜰 수 있다.
+- 플러그인으로 붙인 연결(`mcp__plugin_vcu-tutor_tutor__…`)의 이 16개는 이 스킬이 미리 허용해 두어 허용 창이 뜨지 않는다. 다른 이름으로 직접 붙인 연결이면 허용 창이 뜰 수 있다.
 
 ## 보조 파일은 스킬이 켜진 응답에서 읽는다
 
@@ -149,7 +151,14 @@ study_start(folder="my-course", mode="normal", items=[{"item": "my-course/1-1-1"
 
 ## 다시 볼 것
 
-사용자가 웹 마이페이지에서 기록에 "다시 볼 것"을 표시하면, `study_progress(<폴더 id>)`의 그 과정 `review_records`에 온다. 지금 공부하는 과정의 것만 꺼낸다.
+"다시 볼 것"은 기록에 다는 표시다. 사용자는 웹 마이페이지에서 표시하거나, 공부 중에 튜터에게 말해 표시한다. 표시한 기록은 `study_progress(<폴더 id>)`의 그 과정 `review_records`에 온다. 지금 공부하는 과정의 것만 꺼낸다.
+
+- **공부 중에 표시하기:** 사용자가 "이거 다시 볼 것으로 해 줘"처럼 말하면, 그 말이 가리키는 기록에 `study_review_mark(<기록 id>)`로 표시를 켠다. 그 응답은 `다시 볼 것으로 표시했습니다 — <이름표>: "<질문 첫 줄, 메모면 글 앞 40자>…"` 한 줄로 알린다(이름표는 결과의 `label` — 맨 끝 글 첫머리, 위 "한 응답 안의 순서" 5). 표시만 부탁한 응답이면 이 줄로 끝낸다. 진도는 바꾸지 않는다.
+  - 기록 id는 이 세션에서 남긴 `study_record` 결과의 `id`다. 앞 세션의 메모면 `study_progress`의 `memos`에서 찾는다. 찾지 못하면 웹 마이페이지의 학습 기록에서 표시할 수 있다고 알린다.
+  - 가리키는 것이 아직 기록이 아니면(방금 전한 구간 설명처럼) 아래 "학습 기록"의 메모 규칙대로 그 글을 메모로 먼저 남기고, 돌아온 `id`로 표시를 켠다. 알림은 표시 한 줄만 쓴다(메모 알림 줄은 따로 쓰지 않는다).
+
+이어 가기 때는 표시한 기록을 이렇게 꺼낸다.
+
 
 1. 이어 가기를 시작할 때(위 "시작" 2번) `review_records`가 있으면 먼저 "지난번에 다시 보려고 표시하신 기록이 <review_total>개 있습니다."라고 알린다. 하나씩 한 줄로 보여 준다. 한 줄 = 종류(확인 문답·내 질문·메모)·자료 제목(`item_title`)·강의실 이름표(`label`)·질문 첫 줄(메모면 글 첫 줄). 최근 10개까지만 온다 — 더 있으면 표시를 푼 뒤 다시 부르면 다음 것이 오고, 전체는 웹 마이페이지에 있다고 알린다.
 2. "다시 짚어 볼까요?"라고 묻는다. 아니라고 하면 표시는 그대로 두고 공부를 이어 간다.
