@@ -38,7 +38,9 @@ SSH·원격 환경에서 브라우저가 열리지 않으면 Claude Code가 보�
 
 ## 판 올리기
 
-터미널에서 `claude plugin marketplace update vcu-tutor-plugins` 뒤 `claude plugin update vcu-tutor@vcu-tutor-plugins`를 실행합니다. 새 판은 다음 세션부터 쓰입니다(열려 있는 세션은 `/reload-plugins`).
+공부를 시작할 때 튜터가 새 판이 있는지 확인하고, 있으면 스스로 업데이트합니다(0.1.7부터). 새 판은 다음 세션부터 쓰입니다(열려 있는 세션은 `/reload-plugins`).
+
+직접 올리려면 `/plugin` → Installed → vcu-tutor → Update now를 고르거나, 터미널에서 `claude plugin marketplace update vcu-tutor-plugins` 뒤 `claude plugin update vcu-tutor@vcu-tutor-plugins`를 실행합니다.
 
 ## 시험(고치는 사람만)
 

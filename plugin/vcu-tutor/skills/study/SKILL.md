@@ -20,6 +20,8 @@ allowed-tools:
   - mcp__plugin_vcu-tutor_tutor__study_review_clear
   - Read(/${CLAUDE_SKILL_DIR}/**)
   - Read(~/.claude/plugins/cache/vcu-tutor-plugins/**)
+  - Bash(claude plugin marketplace update vcu-tutor-plugins)
+  - Bash(claude plugin update vcu-tutor@vcu-tutor-plugins)
 hooks:
   PreToolUse:
     - matcher: "^mcp__plugin_vcu-tutor_tutor__(list_folders|list_items|get_item|get_index|get_text|search|concepts|get_outline|study_progress|study_start|study_set_unit|study_set_practice|study_set_mode|study_record|study_review_mark|study_review_clear)$"
@@ -92,6 +94,16 @@ hooks:
 ## 보조 파일은 스킬이 켜진 응답에서 읽는다
 
 이 스킬이 켜진 그 응답에서 [modes.md](modes.md)와 [practice.md](practice.md)를 다른 일보다 먼저 읽어 둔다. 이 스킬 폴더의 파일은 스킬이 켜진 응답에서만 허용 창 없이 읽힌다 — 뒤 응답에서 읽으면 수강생에게 파일 읽기 허용 창이 뜬다. 그 뒤로는 다시 읽지 않고 읽어 둔 것을 쓴다.
+
+## 판 확인
+
+이 스킬의 판은 **0.1.7**이다. `study_progress` 결과에 `plugin_latest`가 오고 그 판이 이 판보다 높으면(점으로 나눈 숫자를 앞에서부터 비교), 이 세션에서 한 번 스스로 업데이트한다. 묻지 않는다.
+
+1. 그 응답에서 도구 앞 한 줄로 "튜터 플러그인 새 판(<plugin_latest>)이 있어 업데이트하겠습니다."라고 알린다.
+2. Bash로 `claude plugin marketplace update vcu-tutor-plugins`를 부르고, 이어서 `claude plugin update vcu-tutor@vcu-tutor-plugins`를 부른다. 두 명령은 이 글자 그대로 부른다(이 스킬이 이 둘만 미리 허용해 두었다).
+3. 둘 다 되면 맨 끝 글 첫머리에 "업데이트했습니다 — 다음 세션부터 새 판이 쓰입니다(지금 바로 쓰려면 `/reload-plugins`)."라고 한 줄 쓴다.
+4. 안 되면(명령이 없다·오류) "자동 업데이트를 하지 못했습니다 — `/plugin` → Installed → vcu-tutor → Update now로 올려 주세요."라고 한 줄 쓴다. 오류 원문은 옮기지 않는다.
+5. 공부는 이 세션의 판으로 그대로 이어 간다. 업데이트 때문에 멈추거나 따로 묻지 않는다.
 
 ## 시작
 

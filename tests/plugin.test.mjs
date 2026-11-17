@@ -18,6 +18,8 @@ const ALL = [...READ_TOOLS, ...STUDY_TOOLS];
 const SKILL_FILES = ["SKILL.md", "modes.md", "practice.md"];
 // 스킬 폴더 파일 읽기만 좁혀 허용한다(스킬이 켜진 응답 한정 — Claude Code 의 allowed-tools 는 그 턴에만 먹는다). 범위 없는 Read 는 넣지 않는다
 const READ_RULES = ["Read(/${CLAUDE_SKILL_DIR}/**)", "Read(~/.claude/plugins/cache/vcu-tutor-plugins/**)"];
+// 스스로 업데이트(판 확인 절)에 쓰는 두 명령만 — 글자 그대로 허용한다(넓은 Bash 허용은 넣지 않는다)
+const UPDATE_RULES = ["Bash(claude plugin marketplace update vcu-tutor-plugins)", "Bash(claude plugin update vcu-tutor@vcu-tutor-plugins)"];
 
 function frontmatter(text) {
   const m = text.match(/^---\n([\s\S]*?)\n---\n/);
@@ -32,7 +34,7 @@ function allowedTools(fm) {
   assert.ok(i >= 0, "allowed-tools: 줄이 없습니다");
   const out = [];
   for (const l of lines.slice(i + 1)) {
-    const m = l.match(/^  - (\S+)$/);
+    const m = l.match(/^  - (\S.*)$/);
     if (!m) break;
     out.push(m[1]);
   }
@@ -146,11 +148,11 @@ test("README 설치 4단계와 원격 한 줄", () => {
     assert.ok(r.includes(s), `README 에 없는 문장: ${s}`);
 });
 
-test("허용 도구 칸 = 읽기 8 + study_* 8(플러그인 연결 이름 꼴) + 스킬 폴더로 좁힌 Read 둘", () => {
+test("허용 도구 칸 = 읽기 8 + study_* 8(플러그인 연결 이름 꼴) + 스킬 폴더로 좁힌 Read 둘 + 업데이트 명령 둘", () => {
   const got = allowedTools(frontmatter(read(path.join(S, "SKILL.md"))));
   assert.equal(new Set(got).size, got.length, "같은 도구가 두 번 있습니다");
   assert.deepEqual(got.filter((t) => t.startsWith("mcp__")).sort(), ALL.map((t) => prefix() + t).sort());
-  assert.deepEqual(got.filter((t) => !t.startsWith("mcp__")), READ_RULES, "MCP 도구 밖 허용은 좁힌 Read 둘뿐이어야 합니다");
+  assert.deepEqual(got.filter((t) => !t.startsWith("mcp__")), [...READ_RULES, ...UPDATE_RULES], "MCP 도구 밖 허용은 좁힌 Read 둘과 업데이트 명령 둘뿐이어야 합니다");
   const skill = read(path.join(S, "SKILL.md"));
   assert.ok(skill.includes("이 스킬이 켜진 그 응답에서 [modes.md](modes.md)와 [practice.md](practice.md)를"), "보조 파일을 스킬이 켜진 응답에서 읽는 규칙이 없습니다");
 });
@@ -398,4 +400,16 @@ test("실습 키트가 있으면 키트가 각본이다 — 튜터가 이 대화
   const mat = practice.slice(practice.indexOf("## 재료 읽기"), practice.indexOf("## 건너뜀 기록"));
   const kit = mat.indexOf("키트 폴더에서 읽는다"), where = mat.indexOf("받는 곳이 정리물이나"), ta = mat.indexOf("담당 조교님께");
   assert.ok(kit > 0 && kit < where && where < ta, "재료 안내 차례가 키트 폴더 → 받는 곳 → 조교님이 아닙니다");
+});
+
+test("판 확인 — 스킬에 적힌 판 = plugin.json 판, 서버 plugin_latest 가 더 높으면 허용해 둔 두 명령으로 스스로 업데이트", () => {
+  // 사용자 결정(2026-11-18): 서버가 최신 판을 알려 주면 튜터가 묻지 않고 업데이트한다 — 적용은 다음 세션부터(/reload-plugins)
+  const skill = read(path.join(S, "SKILL.md"));
+  const ver = json(path.join(P, ".claude-plugin", "plugin.json")).version;
+  assert.ok(skill.includes(`이 스킬의 판은 **${ver}**이다`), `SKILL.md 판 줄이 plugin.json 판(${ver})과 다릅니다 — 판을 올릴 때 둘 다 고칩니다`);
+  const at = skill.indexOf("## 판 확인");
+  assert.ok(at > 0 && at < skill.indexOf("## 시작"), "판 확인 절이 시작 앞에 있어야 합니다");
+  const sec = skill.slice(at, skill.indexOf("## 시작"));
+  for (const r of UPDATE_RULES) assert.ok(sec.includes("`" + r.slice(5, -1) + "`"), `판 확인 절에 명령이 없습니다: ${r}`);
+  for (const s of ["`plugin_latest`", "묻지 않는다", "`/reload-plugins`", "`/plugin` → Installed → vcu-tutor → Update now"]) assert.ok(sec.includes(s), `판 확인 절에 없는 문장: ${s}`);
 });
