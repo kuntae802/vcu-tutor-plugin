@@ -378,3 +378,24 @@ test("공부 중에 '다시 볼 것'을 켤 수 있다 — 기록이 아니면 �
   assert.ok(skill.includes("`study_review_mark`만 그 기록이 돌아온 뒤에 부른다"), "한 응답 안의 순서에 표시 켜기 예외가 없습니다");
   assert.ok(read(path.join(P, "README.md")).includes("16개(읽기 8개, 진도·기록 8개)"));
 });
+
+test("실습 키트가 있으면 키트가 각본이다 — 튜터가 이 대화에서 그대로 수행하고, 모드는 설명의 깊이만 바꾼다", () => {
+  // 사용자 결정(2026-11-18): 튜터도 Claude Code 라서 키트(진행 지침·챕터 파일·진행 기록)를 그대로 수행한다(유연성).
+  // 핵심 문장만 묶는다 — 나머지 표현은 키트에 맞춰 고칠 수 있게 둔다
+  const skill = read(path.join(S, "SKILL.md"));
+  const practice = read(path.join(S, "practice.md"));
+  const modes = read(path.join(S, "modes.md"));
+  const at = practice.indexOf("## 실습 키트");
+  assert.ok(at > practice.indexOf("## 순서") && at < practice.indexOf("## 강의 자료 실습"), "실습 키트 절이 순서 뒤 · 강의 자료 실습 앞에 있어야 합니다");
+  const sec = practice.slice(at, practice.indexOf("## 강의 자료 실습"));
+  for (const s of ["그 키트가 이 실습의 각본이다", "튜터가 이 대화에서 키트를 그대로 수행한다", "모드는 설명의 깊이만 바꾼다", "**키트가 없으면:**", "`intro.prerequisites`"]) {
+    assert.ok(sec.includes(s), `실습 키트 절에 없는 문장: ${s}`);
+  }
+  // 다른 문서가 키트 절을 가리킨다
+  assert.ok(modes.includes("[practice.md](practice.md) \"실습 키트\""), "modes.md 가 키트 절을 가리키지 않습니다");
+  assert.ok(skill.includes("실습 키트가 있으면 그 키트의 단계만 다룬다"), "SKILL.md 늘 지킬 것에 키트 단계가 없습니다");
+  // 재료 안내: 키트 폴더 → 받는 곳 → 조교님 차례(받아 둔 파일인데 '조교님께'로 가지 않게)
+  const mat = practice.slice(practice.indexOf("## 재료 읽기"), practice.indexOf("## 건너뜀 기록"));
+  const kit = mat.indexOf("키트 폴더에서 읽는다"), where = mat.indexOf("받는 곳이 정리물이나"), ta = mat.indexOf("담당 조교님께");
+  assert.ok(kit > 0 && kit < where && where < ta, "재료 안내 차례가 키트 폴더 → 받는 곳 → 조교님이 아닙니다");
+});
